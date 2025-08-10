@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Tạo Khung Avatar Kỷ Niệm 30 Năm Thành Lập Trường</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        #avatarCanvas {
+            touch-action: none; /* Ngăn các hành động mặc định của trình duyệt trên canvas */
+            cursor: move;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-md mx-auto bg-white rounded-xl shadow-lg p-6 md:p-8 text-center">
+        
+        <!-- Header -->
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Kỷ niệm 30 năm thành lập trường THPT Chuyên</h1>
+        <p class="text-gray-600 mt-2 mb-6">Tạo ảnh đại diện để cùng nhau lan tỏa niềm vui!</p>
+
+        <!-- Canvas for preview -->
+        <div class="relative w-full aspect-square mb-6 bg-gray-200 rounded-lg overflow-hidden shadow-inner">
+            <canvas id="avatarCanvas" class="w-full h-full"></canvas>
+            <div id="placeholder" class="absolute inset-0 flex items-center justify-center text-gray-500 pointer-events-none">
+                <p>Xem trước ảnh của bạn ở đây</p>
+            </div>
+        </div>
+
+        <!-- Controls for editing -->
+        <div class="space-y-4 mb-6">
+            <!-- Zoom Slider -->
+            <div class="flex items-center space-x-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                </svg>
+                <input id="zoomSlider" type="range" min="25" max="300" value="100" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                <span id="zoomValue" class="text-sm font-medium text-gray-700 w-16 text-right">100%</span>
+            </div>
+            <!-- Rotation Slider -->
+            <div class="flex items-center space-x-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5M20 20v-5h-5M4 20h5v-5M20 4h-5v5" />
+                </svg>
+                 <input id="rotationSlider" type="range" min="-180" max="180" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                <span id="rotationValue" class="text-sm font-medium text-gray-700 w-16 text-right">0°</span>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label for="imageLoader" class="cursor-pointer w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-indigo-700 transition-colors duration-300 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L6.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
+                Chọn ảnh
+            </label>
+            <input type="file" id="imageLoader" accept="image/*" class="hidden">
+            
+            <button id="downloadBtn" class="w-full bg-green-500 text-white font-semibold py-3 px-4 rounded-lg hover:bg-green-600 transition-colors duration-300 flex items-center justify-center" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 9.293a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+                Tải về
+            </button>
+        </div>
+        
+        <p class="text-xs text-gray-400 mt-6">Ảnh của bạn được xử lý trực tiếp trên trình duyệt và không được tải lên bất kỳ máy chủ nào.</p>
+    </div>
+
+    <script>
+        // DOM Elements
+        const imageLoader = document.getElementById('imageLoader');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const canvas = document.getElementById('avatarCanvas');
+        const placeholder = document.getElementById('placeholder');
+        const zoomSlider = document.getElementById('zoomSlider');
+        const rotationSlider = document.getElementById('rotationSlider');
+        const zoomValue = document.getElementById('zoomValue');
+        const rotationValue = document.getElementById('rotationValue');
+        const ctx = canvas.getContext('2d');
+
+        // !!! QUAN TRỌNG: Thay thế URL này bằng URL đến file PNG khung viền của bạn
+        const frameSrc ='images/frame.png';
+        
+        // Image Objects
+        const frame = new Image();
+        frame.crossOrigin = "Anonymous";
+        frame.src = frameSrc;
+
+        const userImage = new Image();
+        userImage.crossOrigin = "Anonymous";
+
+        // State Management
+        let imageState = { x: 0, y: 0, scale: 1, rotation: 0 };
+        let isDragging = false;
+        let startDrag = { x: 0, y: 0 };
+
+        // --- Main Drawing Function ---
+        function drawCanvas() {
+            if (!frame.complete || frame.naturalWidth === 0) return; // Don't draw if frame isn't ready
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw user image with transformations if it exists
+            if (userImage.complete && userImage.naturalWidth > 0) {
+                ctx.save();
+                ctx.translate(imageState.x, imageState.y);
+                ctx.rotate(imageState.rotation * Math.PI / 180);
+                ctx.scale(imageState.scale, imageState.scale);
+                ctx.drawImage(userImage, -userImage.width / 2, -userImage.height / 2);
+                ctx.restore();
+            }
+
+            // Draw frame on top
+            ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
+        }
+
+        // --- Image Loading ---
+        
+        // When the frame is loaded, set canvas size
+        frame.onload = () => {
+            canvas.width = frame.naturalWidth;
+            canvas.height = frame.naturalHeight;
+            // If user image is already loaded, re-initialize and draw
+            if (userImage.src) {
+                setupAndDrawUserImage();
+            } else {
+                // Otherwise, just draw the empty frame
+                drawCanvas();
+            }
+        };
+        frame.onerror = () => {
+            placeholder.innerHTML = "<p class='text-red-500'>Lỗi: Không tải được ảnh khung.</p>";
+        }
+
+        // When user selects an image file
+        imageLoader.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                userImage.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // When the user's image is loaded
+        userImage.onload = () => {
+            // Only proceed if the frame is also loaded (so we know the canvas size)
+            if (frame.complete && frame.naturalWidth > 0) {
+                setupAndDrawUserImage();
+            }
+        };
+
+        // Function to initialize the user image state
+        function setupAndDrawUserImage() {
+            // Calculate initial scale to fit the smaller side of the image to the canvas
+            const scaleX = canvas.width / userImage.width;
+            const scaleY = canvas.height / userImage.height;
+            const initialScale = Math.max(scaleX, scaleY);
+
+            // Reset state
+            imageState = {
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                scale: initialScale,
+                rotation: 0
+            };
+
+            // Reset sliders and values
+            zoomSlider.value = initialScale * 100;
+            rotationSlider.value = 0;
+            zoomValue.textContent = `${Math.round(initialScale * 100)}%`;
+            rotationValue.textContent = '0°';
+
+            // Update UI
+            downloadBtn.disabled = false;
+            placeholder.style.display = 'none';
+
+            drawCanvas();
+        }
+
+        // --- Controls and Interaction ---
+
+        // Sliders
+        zoomSlider.addEventListener('input', (e) => {
+            imageState.scale = e.target.value / 100;
+            zoomValue.textContent = `${e.target.value}%`;
+            drawCanvas();
+        });
+
+        rotationSlider.addEventListener('input', (e) => {
+            imageState.rotation = e.target.value;
+            rotationValue.textContent = `${e.target.value}°`;
+            drawCanvas();
+        });
+
+        // Panning (Mouse and Touch)
+        function getEventLocation(e) {
+            if (e.touches && e.touches.length === 1) {
+                return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            } else if (e.clientX && e.clientY) {
+                return { x: e.clientX, y: e.clientY };
+            }
+            return null;
+        }
+
+        function onDragStart(e) {
+            if (!userImage.src) return;
+            e.preventDefault();
+            isDragging = true;
+            const location = getEventLocation(e);
+            if (!location) return;
+            const canvasRect = canvas.getBoundingClientRect();
+            startDrag.x = location.x / canvasRect.width * canvas.width - imageState.x;
+            startDrag.y = location.y / canvasRect.height * canvas.height - imageState.y;
+        }
+
+        function onDragMove(e) {
+            if (isDragging) {
+                e.preventDefault();
+                const location = getEventLocation(e);
+                if (!location) return;
+                const canvasRect = canvas.getBoundingClientRect();
+                imageState.x = location.x / canvasRect.width * canvas.width - startDrag.x;
+                imageState.y = location.y / canvasRect.height * canvas.height - startDrag.y;
+                drawCanvas();
+            }
+        }
+
+        function onDragEnd() {
+            isDragging = false;
+        }
+
+        canvas.addEventListener('mousedown', onDragStart);
+        canvas.addEventListener('mousemove', onDragMove);
+        canvas.addEventListener('mouseup', onDragEnd);
+        canvas.addEventListener('mouseleave', onDragEnd);
+
+        canvas.addEventListener('touchstart', onDragStart);
+        canvas.addEventListener('touchmove', onDragMove);
+        canvas.addEventListener('touchend', onDragEnd);
+        
+        // Download Button
+        downloadBtn.addEventListener('click', () => {
+            if (userImage.src) {
+                const link = document.createElement('a');
+                link.download = 'avatar-ky-niem-30-nam.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }
+        });
+
+    </script>
+</body>
+</html>
